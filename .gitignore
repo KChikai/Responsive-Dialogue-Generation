@@ -1,0 +1,7 @@
+.idea
+
+volume_dir/data/seq2seq/
+!volume_dir/data/seq2seq/.gitkeep
+
+volume_dir/data/tweet2vec/
+!volume_dir/data/tweet2vec/.gitkeep

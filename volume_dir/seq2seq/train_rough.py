@@ -1,0 +1,244 @@
+# -*- coding:utf-8 -*-
+"""
+speaker model用プレトレイン
+（大量のトレーニング文で学習を行う）
+"""
+
+import os
+os.environ["CHAINER_TYPE_CHECK"] = "0"
+
+import pickle
+import argparse
+import numpy as np
+import chainer
+from chainer import cuda, optimizers, serializers
+from util import JaConvCorpus
+from pretrain_seq2seq import PreTrainSeq2Seq
+from setting_param import EPOCH, FEATURE_NUM, HIDDEN_NUM, LABEL_NUM, LABEL_EMBED, BATCH_NUM, CORPUS_DIR
+
+
+# parse command line args
+parser = argparse.ArgumentParser()
+parser.add_argument('--gpu', '-g', default='-1', type=int, help='GPU ID (negative value indicates CPU)')
+parser.add_argument('--epoch', '-e', default=EPOCH, type=int, help='number of epochs to learn')
+parser.add_argument('--feature_num', '-f', default=FEATURE_NUM, type=int, help='dimension of feature layer')
+parser.add_argument('--hidden_num', '-hi', default=HIDDEN_NUM, type=int, help='dimension of hidden layer')
+parser.add_argument('--label_num', '-ln', default=LABEL_NUM, type=int, help='dimension of label layer')
+parser.add_argument('--label_embed', '-le', default=LABEL_EMBED, type=int, help='dimension of label embed layer')
+parser.add_argument('--batchsize', '-b', default=BATCH_NUM, type=int, help='learning minibatch size')
+args = parser.parse_args()
+
+# GPU settings
+gpu_device = args.gpu
+if args.gpu >= 0:
+    cuda.check_cuda_available()
+    cuda.get_device(gpu_device).use()
+xp = cuda.cupy if args.gpu >= 0 else np
+
+n_epoch = args.epoch
+feature_num = args.feature_num
+hidden_num = args.hidden_num
+batchsize = args.batchsize
+label_num = args.label_num
+label_embed = args.label_embed
+
+
+def remove_extra_padding(batch_list, reverse_flg=True):
+    """
+    remove extra padding
+    :param batch_list: a list of a batch
+    :param reverse_flg: whether a batch of sentences is reversed or not
+    """
+    remove_row = []
+    # reverse order (padding first)
+    if reverse_flg:
+        for i in range(len(batch_list)):
+            if sum(batch_list[i]) == -1 * len(batch_list[i]):
+                remove_row.append(i)
+            else:
+                break
+    # natural order (padding last)
+    else:
+        for i in range(len(batch_list))[::-1]:
+            if sum(batch_list[i]) == -1 * len(batch_list[i]):
+                remove_row.append(i)
+            else:
+                break
+    return np.delete(batch_list, remove_row, axis=0)
+
+
+def main():
+
+    ###########################
+    #### create dictionary ####
+    ###########################
+
+    if os.path.exists(CORPUS_DIR + 'dictionary.dict'):
+        corpus = JaConvCorpus(create_flg=False, batch_size=batchsize, size_filter=True)
+        corpus.load(load_dir=CORPUS_DIR)
+    else:
+        corpus = JaConvCorpus(create_flg=True, batch_size=batchsize, size_filter=True)
+        corpus.save(save_dir=CORPUS_DIR)
+    print('Vocabulary Size (number of words) :', len(corpus.dic.token2id))
+    print('Emotion size: ', len(corpus.emotion_set))
+
+    # search word_threshold (general or emotional)
+    ma = 0
+    mi = 999999
+    for word in corpus.emotion_set:
+        wid = corpus.dic.token2id[word]
+        if wid > ma:
+            ma = wid
+        if wid < mi:
+            mi = wid
+    word_threshold = mi
+
+    ######################
+    #### create model ####
+    ######################
+
+    model = PreTrainSeq2Seq(all_vocab_size=len(corpus.dic.token2id), emotion_vocab_size=len(corpus.emotion_set),
+                            feature_num=feature_num, hidden_num=hidden_num, batch_size=batchsize,
+                            label_num=label_num, label_embed_num=label_embed, gpu_flg=args.gpu)
+
+    if args.gpu >= 0:
+        model.to_gpu()
+    optimizer = optimizers.Adam(alpha=0.001)
+    optimizer.setup(model)
+    optimizer.add_hook(chainer.optimizer.WeightDecay(0.0001))
+
+    ##########################
+    #### create ID corpus ####
+    ##########################
+
+    input_mat = []
+    output_mat = []
+    input_mat_rev = []
+    label_mat = []
+    max_input_ren = max_output_ren = 0
+    print('start making corpus matrix...')
+    for input_text, output_text in zip(corpus.rough_posts, corpus.rough_cmnts):
+
+        # reverse an input and add eos tag
+        output_text.append(corpus.dic.token2id["<eos>"])            # 出力の最後にeosを挿入
+
+        # update max sentence length
+        max_input_ren = max(max_input_ren, len(input_text))
+        max_output_ren = max(max_output_ren, len(output_text))
+
+        # make a list of lists
+        input_mat.append(input_text)
+        output_mat.append(output_text)
+
+        # make label lists TODO: 3値分類（pos, neg, neu）のみの対応なので可変にする
+        n_num = p_num = 0
+        for word in output_text:
+            if corpus.dic[word] in corpus.neg_words:
+                n_num += 1
+            if corpus.dic[word] in corpus.pos_words:
+                p_num += 1
+        if (n_num + p_num) == 0:
+            label_mat.append([1 for _ in range(len(output_text))])
+        elif n_num <= p_num:
+            label_mat.append([2 for _ in range(len(output_text))])
+        elif n_num > p_num:
+            label_mat.append([0 for _ in range(len(output_text))])
+        else:
+            raise ValueError
+
+    # make reverse corpus
+    for input_text in input_mat:
+        input_mat_rev.append(input_text[::-1])
+
+    # padding (inputの文頭・outputの文末にパディングを挿入する)
+    print('start labeling...')
+    for li in input_mat:
+        insert_num = max_input_ren - len(li)
+        for _ in range(insert_num):
+            li.append(corpus.dic.token2id['<pad>'])
+    for li in output_mat:
+        insert_num = max_output_ren - len(li)
+        for _ in range(insert_num):
+            li.append(corpus.dic.token2id['<pad>'])
+    for li in input_mat_rev:
+        insert_num = max_input_ren - len(li)
+        for _ in range(insert_num):
+            li.insert(0, corpus.dic.token2id['<pad>'])
+    for li in label_mat:
+        insert_num = max_output_ren - len(li)
+        for _ in range(insert_num):
+            li.append(corpus.dic.token2id['<pad>'])
+    if len(output_mat) != len(label_mat):
+        print('Output matrix and label matrix should have the same dimension.')
+        raise ValueError
+
+    # create batch matrix
+    print('transpose...')
+    input_mat = np.array(input_mat, dtype=np.int32).T
+    input_mat_rev = np.array(input_mat_rev, dtype=np.int32).T
+    output_mat = np.array(output_mat, dtype=np.int32).T
+    label_mat = np.array(label_mat, dtype=np.int32).T
+
+    # separate corpus into Train and Test TODO:実験時はテストデータとトレーニングデータに分離する
+    print('split train and test...')
+    train_input_mat = input_mat
+    train_output_mat = output_mat
+    train_input_mat_rev = input_mat_rev
+    train_label_mat = label_mat
+
+    #############################
+    #### train seq2seq model ####
+    #############################
+
+    accum_loss = 0
+    train_loss_data = []
+    print('start training...')
+    for num, epoch in enumerate(range(n_epoch)):
+        total_loss = 0
+        batch_num = 0
+        perm = np.random.permutation(len(corpus.rough_posts))
+
+        # for training
+        for i in range(0, len(corpus.rough_posts), batchsize):
+
+            # select batch data
+            input_batch = remove_extra_padding(train_input_mat[:, perm[i:i + batchsize]], reverse_flg=False)
+            input_batch_rev = remove_extra_padding(train_input_mat_rev[:, perm[i:i + batchsize]], reverse_flg=True)
+            output_batch = remove_extra_padding(train_output_mat[:, perm[i:i + batchsize]], reverse_flg=False)
+            label_batch = remove_extra_padding(train_label_mat[:, perm[i:i + batchsize]], reverse_flg=False)
+
+            # Encode a sentence
+            model.initialize(batch_size=input_batch.shape[1])       # initialize cell
+            model.encode(input_batch, input_batch_rev, train=True)  # encode (output: hidden Variable)
+
+            # Decode from encoded context
+            input_ids = xp.array([corpus.dic.token2id["<start>"] for _ in range(input_batch.shape[1])])
+            for w_ids, l_ids in zip(output_batch, label_batch):
+                loss, predict_mat = model.decode(input_ids, w_ids, label_id=l_ids, word_th=word_threshold, train=True)
+                input_ids = w_ids
+                accum_loss += loss
+
+            # learn model
+            model.cleargrads()     # initialize all grad to zero
+            accum_loss.backward()  # back propagation
+            optimizer.update()
+            total_loss += float(accum_loss.data)
+            batch_num += 1
+            print('Epoch: ', num, 'Batch_num', batch_num, 'batch loss: {:.2f}'.format(float(accum_loss.data)))
+            accum_loss = 0
+
+        train_loss_data.append(float(total_loss / batch_num))
+
+        # save model and optimizer
+        print('-----', epoch + 1, ' times -----')
+        print('save the model and optimizer')
+        serializers.save_hdf5('../data/seq2seq/' + str(epoch) + '_rough.model', model)
+        serializers.save_hdf5('../data/seq2seq/' + str(epoch) + '_rough.state', optimizer)
+
+    # save loss data
+    with open('./data/loss_train_data.pkl', 'wb') as f:
+        pickle.dump(train_loss_data, f)
+
+
+if __name__ == "__main__":
+    main()
