@@ -30,10 +30,10 @@ Decoder部分に[Speaker Model][persona_paper]と[External Memory][ecm_paper]
 学習の分類については以下の通りである．
 
 - Pre-Training
-  - seq2seqとspeaker modelとexternal memoryの学習（学習データ: `volume/data/seq2seq/rough_pair_corpus.txt`）
-  - tweet2vecの学習（学習データ: `volume/data/tweet2vec/tweet2vec_topic_trainer.txt`）
+  - seq2seqとspeaker modelとexternal memoryの学習（学習データ: `volume_dir/data/seq2seq/rough_pair_corpus.txt`）
+  - tweet2vecの学習（学習データ: `volume_dir/data/tweet2vec/tweet2vec_topic_trainer.txt`）
 - Fine-Tuning
-  - tweet2vec以外のモデルの再学習 （学習データ: `volume/data/seq2seq/fine_pair_corpus.txt`）
+  - tweet2vec以外のモデルの再学習 （学習データ: `volume_dir/data/seq2seq/fine_pair_corpus.txt`）
 
 ***データセットについて:***
 
