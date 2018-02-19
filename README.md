@@ -14,7 +14,7 @@ tweet2vec の実装は[元論文の実装][tweet2vec]通り [theano][theano] + [
 
 ***モデル図:***
 
-![model](https://github.com/OnizukaLab/ncm_topics_domains/blob/master/images/model-image.png?raw=true)
+![model](https://github.com/OnizukaLab/ncm_topics_emotions/blob/master/images/model-image.png?raw=true)
 
 モデルは図の通りである．
 応答生成器である[Sequence-to-Sequence (seq2seq)][s2s_paper]モデルに，
@@ -24,7 +24,7 @@ Decoder部分に[Speaker Model][persona_paper]と[External Memory][ecm_paper]
 
 ***学習図:***
 
-![train](https://github.com/OnizukaLab/ncm_topics_domains/blob/master/images/model-train.png?raw=true)
+![train](https://github.com/OnizukaLab/ncm_topics_emotions/blob/master/images/model-train.png?raw=true)
 
 学習時は，図の様に二段階の学習を行う．
 学習の分類については以下の通りである．
