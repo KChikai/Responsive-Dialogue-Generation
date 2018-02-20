@@ -171,8 +171,9 @@ Installed packages by Docker:
    に一行一文の形式のテストファイルに対して，出力を行う．
    出力結果は以下の様に出力される．
    
-   ![model](https://github.com/OnizukaLab/ncm_topics_emotions/blob/master/images/model-output.png?raw=true)
-   
+   <p align="center">
+   <img src="https://github.com/OnizukaLab/ncm_topics_emotions/blob/master/images/model-output.png?raw=true") width="70%" height="70%">
+   </p>   
 
 
 
