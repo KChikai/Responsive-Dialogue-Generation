@@ -14,12 +14,14 @@ ex)
 import os
 os.environ["CHAINER_TYPE_CHECK"] = "0"
 
+import re
 import argparse
 import unicodedata
 from chainer import serializers, cuda
 from util import JaConvCorpus
 from finetune_seq2seq import FineTuneSeq2Seq
-from setting_param import FEATURE_NUM, HIDDEN_NUM, LABEL_NUM, LABEL_EMBED, TOPIC_NUM, CORPUS_DIR, TEST_MODEL
+from setting_param import FEATURE_NUM, HIDDEN_NUM, LABEL_NUM, LABEL_EMBED, \
+    TOPIC_NUM, CORPUS_DIR, TEST_MODEL, T2V_OUTPUT
 
 # parse command line args
 parser = argparse.ArgumentParser()
@@ -30,7 +32,6 @@ parser.add_argument('--label_num', '-ln', default=LABEL_NUM, type=int, help='dim
 parser.add_argument('--label_embed', '-le', default=LABEL_EMBED, type=int, help='dimension of label embed layer')
 parser.add_argument('--topic_num', '-tn', default=TOPIC_NUM, type=int, help='dimension of topic layer')
 parser.add_argument('--bar', '-b', default='0', type=int, help='whether to show the graph of loss values or not')
-parser.add_argument('--lang', '-l', default='ja', type=str, help='the choice of a language (Japanese "ja" or English "en" )')
 parser.add_argument('--beam_search', '-be', default=True, type=bool, help='show results using beam search')
 args = parser.parse_args()
 
@@ -48,7 +49,7 @@ def parse_ja_text(text):
     :return: list: parsed text
     """
     import MeCab
-    mecab = MeCab.Tagger("mecabrc")
+    mecab = MeCab.Tagger(" -d /usr/local/lib/mecab/dic/mecab-ipadic-neologd")
     mecab.parse('')
 
     # list up noun
@@ -146,5 +147,69 @@ def interpreter(data_path, model_path):
         print('')
 
 
+def output_file(data_path, model_path):
+    """
+    :param data_path: the path of corpus you made model learn
+    :param model_path: the path of model you made learn
+    :return:
+    """
+    # call dictionary class
+    corpus = JaConvCorpus(create_flg=False)
+    corpus.load(load_dir=data_path)
+    print('Vocabulary Size (number of words) :', len(corpus.dic.token2id))
+    print('')
+
+    # rebuild seq2seq model
+    model = FineTuneSeq2Seq(all_vocab_size=len(corpus.dic.token2id), emotion_vocab_size=len(corpus.emotion_set),
+                            feature_num=args.feature_num, hidden_num=args.hidden_num,
+                            label_num=args.label_num, label_embed_num=args.label_embed, batch_size=1, gpu_flg=args.gpu)
+    serializers.load_hdf5(model_path, model)
+    emo_label_index = [index for index in range(args.label_num)]
+    topic_label_index = [index for index in range(args.topic_num)]
+
+    # run conversation system
+    r_label = re.compile("(__label__)([0-9]+)")
+    pattern = "(.+?)(\t)(.+?)(\n|\r\n)"
+    r = re.compile(pattern)
+    for line in open(T2V_OUTPUT, 'r', encoding='utf-8'):
+        m = r.search(line)
+        if m is not None:
+            topic_label = m.group(1)
+            sentence = m.group(3)
+
+            # check a topic tag
+            label_info = r_label.search(topic_label)
+            if int(label_info.group(2)) < len(topic_label_index):
+                topic_label_id = int(label_info.group(2))
+            else:
+                print('domain label がドメイン数の上限を超えています．')
+                raise ValueError
+
+            # parse text by mecab
+            input_vocab = [unicodedata.normalize('NFKC', word.lower()) for word in parse_ja_text(sentence)]
+            input_vocab_rev = input_vocab[::-1]
+
+            # convert word into ID
+            input_sentence = [corpus.dic.token2id[word] for word in input_vocab if not corpus.dic.token2id.get(word) is None]
+            input_sentence_rev = [corpus.dic.token2id[word] for word in input_vocab_rev if not corpus.dic.token2id.get(word) is None]
+
+            print("input -> ", sentence, "domain:", topic_label_id)
+            model.initialize(batch_size=1)
+            for emo_label in range(LABEL_NUM):
+                sentence = model.generate(input_sentence, input_sentence_rev, sentence_limit=len(input_sentence) + 20,
+                                          emo_label_id=emo_label, topic_label_id=topic_label_id,
+                                          word2id=corpus.dic.token2id, id2word=corpus.dic)
+                if emo_label == 0:
+                    print("neg -> ", sentence)
+                elif emo_label == 1:
+                    print("neu -> ", sentence)
+                elif emo_label == 2:
+                    print("pos -> ", sentence)
+                else:
+                    raise ValueError
+            print('')
+
+
 if __name__ == '__main__':
-    interpreter(CORPUS_DIR, TEST_MODEL)
+    # interpreter(CORPUS_DIR, TEST_MODEL)
+    output_file(CORPUS_DIR, TEST_MODEL)

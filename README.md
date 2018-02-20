@@ -128,9 +128,10 @@ Installed packages by Docker:
    ~~~
    
    作成したイメージからdocker containerを作成する．
+   マウントするこのプロジェクトディレクトリの置き場を形式的に`/your/local/path/`としている．  
    
    ~~~
-    $ nvidia-docker run --name <container_name> -v /home/chikai/proposal/:/home/python_user/ 
+    $ nvidia-docker run --name <container_name> -v /your/local/path/ncm_topic_domains:/home/python_user/ 
     --device /dev/nvidia0:/dev/nvidia0 --device /dev/nvidia1:/dev/nvidia1 --device /dev/nvidiactl:/dev/nvidiactl 
     --device /dev/nvidia-uvm:/dev/nvidia-uvm -i -t <tag_name> /bin/bash
    ~~~
@@ -166,6 +167,12 @@ Installed packages by Docker:
    ~~~
     $ sh test_model.sh
    ~~~
+   上記のシェルスクリプトを実行することで，`volume_dir/data/test_input.txt` 
+   に一行一文の形式のテストファイルに対して，出力を行う．
+   出力結果は以下の様に出力される．
+   
+   ![model](https://github.com/OnizukaLab/ncm_topics_emotions/blob/master/images/model-output.png?raw=true)
+   
 
 
 

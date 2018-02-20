@@ -34,3 +34,7 @@ GRAD_CLIP = 5.
 BIAS = False
 # use schedule
 SCHEDULE = True
+
+MODEL_PATH = '../data/tweet2vec/'
+TEST_INPUT = '../data/test_input.txt'
+SAVE_PATH = '../data/t2v_output.txt'

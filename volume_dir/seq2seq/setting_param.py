@@ -11,6 +11,8 @@ POS_DATA = '../data/pos-extend.txt'
 PRETRAIN_MODEL = '../data/seq2seq/19_rough.model'
 TEST_MODEL = '../data/seq2seq/19_fine.model'
 
+T2V_OUTPUT = '../data/t2v_output.txt'
+
 # corpus size
 MAX_LENGTH = 25
 WORD_NUM = 40000
