@@ -55,16 +55,34 @@ finetuning時のデータ形式は以下の様に表される．
 `<domain_label>`のラベルの表記は`__label__0`, `__label__1`...の様に表記を行う．
 例えば，ドメイン数が二値の場合，ラベルは`__label__0`, `__label__1`の二つである．
 seq2seq データは`volume_dir/data/seq2seq/`下に配置する．
-デフォルトのファイル名は，pre-training用データは`rough_pair_corpus.txt`，
-fine tuning用データは`fine_pair_corpus.txt`としている．
+デフォルトのファイル名は，pre-training用データは`volume_dir/data/seq2seq/rough_pair_corpus.txt`，
+fine tuning用データは`volume_dir/data/seq2seq/fine_pair_corpus.txt`としている．
 
 tweet2vec は元の実装通り以下の形式でのデータを取り扱う．
 
     <tag><TAB><sentence>
 
 `<tag>`は`<sentence>`に対応するドメインラベルを表す．
-デフォルトのファイル名は訓練データは`tweet2vec_topic_trainer.txt`，
-テストデータは`tweet2vec_topic_tester.txt`としている．
+デフォルトのファイル名は訓練データは`volume_dir/data/tweet2vec/tweet2vec_topic_trainer.txt`，
+テストデータは`volume_dir/data/tweet2vec/tweet2vec_topic_tester.txt`としている．
+
+seq2seqを学習するに当たって，低頻度語の置き換えに使用するword2vecのモデルと選定した感情語彙のリストが必要である．
+以下に各データの説明を行う．
+
+- `volume_dir/data/seq2seq/neo_model.vec`
+  - fasttextでwikipedia dataを学習した分散表現モデルを使用する．
+  [ここ][embedding]からダウンロードを行い，上記のファイル名で置く．
+
+- `volume_dir/data/seq2seq/neg-extend.txt`
+  - negativeな単語を集めたテキストファイル．一行に付き一単語の形式で記述する．
+
+- `volume_dir/data/seq2seq/pos-extend.txt`
+  - positiveな単語を集めたテキストファイル．一行に付き一単語の形式で記述する．
+
+
+[embedding]: https://qiita.com/Hironsan/items/513b9f93752ecee9e670 "embedding"
+
+
 
 ## Features
 
@@ -86,7 +104,10 @@ tweet2vec は元の実装通り以下の形式でのデータを取り扱う．
   - 学習に利用するデータや学習済みモデルの保存先．データ形式が異なるのでtweet2vecとseq2seqで分かれている．
 
 
+
 ## Requirement
+
+***Environment:***
 
 [Docker][docker] を用いて環境構築を行う．
 実験環境として， NVIDIA GPUが搭載されたUbuntu環境を想定している．
@@ -111,6 +132,19 @@ Installed packages by Docker:
 [mecab]: http://taku910.github.io/mecab/ "mecab"
 [neologd]: https://github.com/neologd/mecab-ipadic-neologd "neologd"
 
+
+***Dataset:***
+
+必要なデータセットについてまとめる．データの詳細な説明は前節を参照．
+
+- `volume_dir/data/tweet2vec/tweet2vec_topic_trainer.txt`: tweet2vecの訓練データ
+- `volume_dir/data/tweet2vec/tweet2vec_topic_tester.txt`: tweet2vecのテストデータ
+- `volume_dir/data/seq2seq/rough_pair_corpus.txt`: seq2seqの事前学習データ
+- `volume_dir/data/seq2seq/fine_pair_corpus.txt`: seq2seqのドメイン会話データ
+- `volume_dir/data/seq2seq/neo_model.vec`: wikipediaの分散表現モデル
+- `volume_dir/data/seq2seq/neg-extend.txt`: ネガティブ感情語彙データ
+- `volume_dir/data/seq2seq/pos-extend.txt`: ポジティブ感情語彙データ
+- `volume_dir/data/test_input.txt`: テスト入力データ
 
 
 ## Usage
