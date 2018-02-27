@@ -1,6 +1,6 @@
-# A Neural Conversation Model Considering Topics and Emotions 
+# Neural Conversation Generation with Domains and Sentiments
 
-会話ドメインと感情を考慮したニューラル対話モデルの[chainer][chainer]実装版．
+入力発話のドメインに合致した応答を生成し、かつ感情を付加するニューラル対話モデルの[chainer][chainer]実装版．
 ドメイン推定器として [tweet2vec][t2v_paper] を使用している．
 tweet2vec の実装は[元論文の実装][tweet2vec]通り [theano][theano] + [lasagne][lasagne] をそのまま流用している．
 
@@ -16,8 +16,8 @@ tweet2vec の実装は[元論文の実装][tweet2vec]通り [theano][theano] + [
 
 ![model](https://github.com/OnizukaLab/ncm_topics_emotions/blob/master/images/model-image.png?raw=true)
 
-モデルは図の通りである．
-応答生成器である[Sequence-to-Sequence (seq2seq)][s2s_paper]モデルに，
+モデルの全体像は図の通りである．
+応答生成器である[Sequence-to-Sequence (seq2seq)][s2s_paper]モデル上に，
 Encoder部分に[tweet2vec][t2v_paper]，
 Decoder部分に[Speaker Model][persona_paper]と[External Memory][ecm_paper]
 を載せたモデルとなっている．
@@ -30,7 +30,7 @@ Decoder部分に[Speaker Model][persona_paper]と[External Memory][ecm_paper]
 学習の分類については以下の通りである．
 
 - Pre-Training
-  - seq2seqとspeaker modelとexternal memoryの学習（学習データ: `volume_dir/data/seq2seq/rough_pair_corpus.txt`）
+  - seq2seq+speaker model+external memoryの学習（学習データ: `volume_dir/data/seq2seq/rough_pair_corpus.txt`）
   - tweet2vecの学習（学習データ: `volume_dir/data/tweet2vec/tweet2vec_topic_trainer.txt`）
 - Fine-Tuning
   - tweet2vec以外のモデルの再学習 （学習データ: `volume_dir/data/seq2seq/fine_pair_corpus.txt`）
