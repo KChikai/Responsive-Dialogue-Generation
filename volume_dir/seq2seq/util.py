@@ -15,7 +15,7 @@ import pickle
 import gensim
 import unicodedata
 from gensim import corpora
-from setting_param import W2V_MODEL_PATH, WORD_NUM, MAX_LENGTH, PRETRAIN_DATA, FINETUNE_DATA, POS_DATA, NEG_DATA
+from setting_param import W2V_MODEL_PATH, WORD_NUM, MAX_LENGTH, PRETRAIN_DATA, FINETUNE_DATA, POS_DATA, NEG_DATA, LOG_PATH
 
 
 def to_words(sentence):
@@ -228,7 +228,7 @@ class JaConvCorpus:
         print('置換え成功数：', replace_num)
         print('unk数出現数：', unk_dic_num + unk_w2v_num,
               '(辞書内単語不一致：', unk_dic_num, ', word2vec単語不一致：', unk_w2v_num, ')')
-        with open('./data/log.txt', 'a', encoding='utf-8') as f:
+        with open(LOG_PATH, 'a', encoding='utf-8') as f:
             f.write('全語彙数　　：' + str(len(self.dic.token2id)) + '\n')
             f.write('全単語出現数：' + str(all_word_num) + '\n')
             f.write('置換え成功数：' + str(replace_num) + '\n')

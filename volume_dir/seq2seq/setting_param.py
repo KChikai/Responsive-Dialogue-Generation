@@ -1,17 +1,21 @@
 # seq2seq parameters
 
 # data to train seq2seq
+DATA_DIR = '../data/seq2seq/'
 CORPUS_DIR = '../data/seq2seq/corpus/'
-W2V_MODEL_PATH = '../data/neo_model.vec'
-PRETRAIN_DATA = '../data/rough_pair_corpus.txt'
-FINETUNE_DATA = '../data/fine_pair_corpus.txt'
-NEG_DATA = '../data/neg-extend.txt'
-POS_DATA = '../data/pos-extend.txt'
 
-PRETRAIN_MODEL = '../data/seq2seq/19_rough.model'
-TEST_MODEL = '../data/seq2seq/19_fine.model'
+W2V_MODEL_PATH = DATA_DIR + 'neo_model.vec'
+PRETRAIN_DATA = DATA_DIR + 'rough_pair_corpus.txt'
+FINETUNE_DATA = DATA_DIR + 'fine_pair_corpus.txt'
+NEG_DATA = DATA_DIR + 'neg-extend.txt'
+POS_DATA = DATA_DIR + 'pos-extend.txt'
+
+PRETRAIN_MODEL = DATA_DIR + '19_rough.model'
+TEST_MODEL = DATA_DIR + '19_fine.model'
 
 T2V_OUTPUT = '../data/t2v_output.txt'
+
+LOG_PATH = DATA_DIR + 'log.txt'
 
 # corpus size
 MAX_LENGTH = 25
