@@ -1,5 +1,12 @@
 # seq2seq parameters
 
+# corpus size
+MAX_LENGTH = 25
+WORD_NUM = 40000
+
+# epoch
+EPOCH = 100
+
 # data to train seq2seq
 DATA_DIR = '../data/seq2seq/'
 CORPUS_DIR = '../data/seq2seq/corpus/'
@@ -10,19 +17,12 @@ FINETUNE_DATA = DATA_DIR + 'fine_pair_corpus.txt'
 NEG_DATA = DATA_DIR + 'neg-extend.txt'
 POS_DATA = DATA_DIR + 'pos-extend.txt'
 
-PRETRAIN_MODEL = DATA_DIR + '19_rough.model'
-TEST_MODEL = DATA_DIR + '19_fine.model'
+PRETRAIN_MODEL = DATA_DIR + str(EPOCH-1) + '_rough.model'
+TEST_MODEL = DATA_DIR + str(EPOCH-1) + '_fine.model'
 
 T2V_OUTPUT = '../data/t2v_output.txt'
 
 LOG_PATH = DATA_DIR + 'log.txt'
-
-# corpus size
-MAX_LENGTH = 25
-WORD_NUM = 40000
-
-# epoch
-EPOCH = 20
 
 # batch size
 BATCH_NUM = 200
