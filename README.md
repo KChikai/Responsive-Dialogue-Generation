@@ -3,9 +3,7 @@
 README in English will be available soon.
 Sorry for your inconvenience.
 
-If you can read text in Japanese, you refer [this README][README_jp].
-
-[README_jp](/readme_jp/README.md)
+If you can read text in Japanese, you refer [this README](/readme_jp/README.md).
 
 ## Reference
 
