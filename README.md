@@ -1,9 +1,13 @@
 # Responsive and Self-Expressive Dialogue Generation
+These are codes to implement our paper:
+Kozo Chikai, Junya Takayama, and Yuki Arase: Responsive and Self-Expressive Dialogue Generation, in Proc. of Workshop on NLP for Conversational AI (Aug. 2019 to appear).
+If you use our codes, please cite the paper avobe.
 
-README in English will be available soon.
-Sorry for your inconvenience.
+Detailed README will be available soon.
+[Japanese](/readme_jp/README.md).
 
-If you can read text in Japanese, you refer [this README](/readme_jp/README.md).
+## Acknowledgement
+This project is funded by Microsoft Research Asia, Microsoft Japan Co., Ltd., and JSPS KAKENHI Grant Number JP18K11435.
 
 ## Reference
 
