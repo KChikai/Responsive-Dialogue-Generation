@@ -1,7 +1,8 @@
-# Neural Conversation Generation with Domains and Sentiments
+# Responsive and Self-Expressive Dialogue Generation
 
 入力発話のドメインに合致した応答を生成し、かつ感情を付加するニューラル対話モデルの[chainer][chainer]実装版．
 ドメイン推定器として [tweet2vec][t2v_paper] を使用している．
+詳細は下記論文を参照．
 tweet2vec の実装は[元論文の実装][tweet2vec]通り [theano][theano] + [lasagne][lasagne] をそのまま流用している．
 
 [chainer]: https://github.com/pfnet/chainer "chainer"
@@ -9,6 +10,8 @@ tweet2vec の実装は[元論文の実装][tweet2vec]通り [theano][theano] + [
 [theano]: https://github.com/Theano/Theano "theano"
 [lasagne]: https://github.com/Lasagne/Lasagne "lasagne"
 
+本コードを利用した際は、下記論文を引用してください。
+Kozo Chikai, Junya Takayama, and Yuki Arase: Responsive and Self-Expressive Dialogue Generation, in Proc. of Workshop on NLP for Conversational AI (Aug. 2019 to appear).
 
 ## Description
 
@@ -209,7 +212,8 @@ Installed packages by Docker:
    <img src="https://github.com/OnizukaLab/ncm_topics_emotions/blob/master/images/model-output.png?raw=true") width="70%" height="70%">
    </p>   
 
-
+## Acknowledgement
+This project is funded by Microsoft Research Asia, Microsoft Japan Co., Ltd., and JSPS KAKENHI Grant Number JP18K11435.
 
 ## Reference 
 
